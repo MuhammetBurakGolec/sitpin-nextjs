@@ -1,7 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
+import { useAuth } from '@clerk/nextjs';
 import { Input } from '@/components/ui/input';
+import { apiService } from '@/lib/api';
 import { BookmarkCard } from '@/features/bookmarks/components/bookmark-card';
 import { AddBookmarkDialog } from '@/features/bookmarks/components/add-bookmark-dialog';
 import { CategoryFilter } from '@/features/bookmarks/components/category-filter';
@@ -71,10 +73,88 @@ const mockBookmarks: BookmarkWithCategory[] = [
     userId: 'user1',
     createdAt: new Date(),
     updatedAt: new Date()
+  },
+  {
+    id: '4',
+    title: 'Stack Overflow',
+    url: 'https://stackoverflow.com',
+    description: 'Programming Q&A community',
+    categoryId: '3',
+    category: mockCategories[2],
+    userId: 'user1',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '5',
+    title: 'Netflix',
+    url: 'https://netflix.com',
+    description: 'Streaming service',
+    categoryId: '2',
+    category: mockCategories[1],
+    userId: 'user1',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '6',
+    title: 'LinkedIn',
+    url: 'https://linkedin.com',
+    description: 'Professional networking',
+    categoryId: '1',
+    category: mockCategories[0],
+    userId: 'user1',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '7',
+    title: 'VS Code',
+    url: 'https://code.visualstudio.com',
+    description: 'Code editor',
+    categoryId: '3',
+    category: mockCategories[2],
+    userId: 'user1',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '8',
+    title: 'Twitter',
+    url: 'https://twitter.com',
+    description: 'Social media platform',
+    categoryId: '2',
+    category: mockCategories[1],
+    userId: 'user1',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '9',
+    title: 'Figma',
+    url: 'https://figma.com',
+    description: 'Design collaboration tool',
+    categoryId: '3',
+    category: mockCategories[2],
+    userId: 'user1',
+    createdAt: new Date(),
+    updatedAt: new Date()
+  },
+  {
+    id: '10',
+    title: 'Notion',
+    url: 'https://notion.so',
+    description: 'All-in-one workspace',
+    categoryId: '1',
+    category: mockCategories[0],
+    userId: 'user1',
+    createdAt: new Date(),
+    updatedAt: new Date()
   }
 ];
 
 export default function BookmarksPage() {
+  const { getToken } = useAuth();
   const [bookmarks, setBookmarks] =
     useState<BookmarkWithCategory[]>(mockBookmarks);
   const [categories, setCategories] = useState<Category[]>(mockCategories);
@@ -97,12 +177,29 @@ export default function BookmarksPage() {
     });
   }, [bookmarks, searchQuery, selectedCategory]);
 
-  const handleAddBookmark = (newBookmark: {
+  const handleAddBookmark = async (newBookmark: {
     title: string;
     url: string;
     description?: string;
     categoryId?: string;
   }) => {
+    try {
+      // Try to use external API first
+      const token = await getToken();
+      const response = await apiService.createBookmark(
+        newBookmark,
+        token || undefined
+      );
+
+      if (response.success) {
+        setBookmarks((prev) => [response.data, ...prev]);
+        return;
+      }
+    } catch (error) {
+      console.warn('External API failed, using local storage:', error);
+    }
+
+    // Fallback to local mock data
     const bookmark: BookmarkWithCategory = {
       id: Date.now().toString(),
       ...newBookmark,
@@ -179,73 +276,75 @@ export default function BookmarksPage() {
   };
 
   return (
-    <div className='space-y-6'>
-      <div className='flex items-center justify-between'>
-        <div>
-          <h1 className='text-3xl font-bold tracking-tight'>Bookmarks</h1>
-          <p className='text-muted-foreground'>
-            Manage your saved websites and links
-          </p>
+    <div className='flex flex-1 flex-col gap-4 p-4 pt-0'>
+      <div className='space-y-6'>
+        <div className='flex items-center justify-between'>
+          <div>
+            <h1 className='text-3xl font-bold tracking-tight'>Bookmarks</h1>
+            <p className='text-muted-foreground'>
+              Manage your saved websites and links
+            </p>
+          </div>
+          <div className='flex gap-2'>
+            <ManageCategoriesDialog
+              categories={categories}
+              onAdd={handleAddCategory}
+              onDelete={handleDeleteCategory}
+            />
+            <AddBookmarkDialog
+              categories={categories}
+              onAdd={handleAddBookmark}
+            />
+          </div>
         </div>
-        <div className='flex gap-2'>
-          <ManageCategoriesDialog
-            categories={categories}
-            onAdd={handleAddCategory}
-            onDelete={handleDeleteCategory}
-          />
-          <AddBookmarkDialog
-            categories={categories}
-            onAdd={handleAddBookmark}
-          />
+
+        <div className='flex flex-col gap-4 sm:flex-row'>
+          <div className='relative flex-1'>
+            <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
+            <Input
+              placeholder='Search bookmarks...'
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className='pl-10'
+            />
+          </div>
         </div>
+
+        <CategoryFilter
+          categories={categories}
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+        />
+
+        <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5'>
+          {filteredBookmarks.map((bookmark) => (
+            <BookmarkCard
+              key={bookmark.id}
+              bookmark={bookmark}
+              onEdit={handleEditBookmark}
+              onDelete={handleDeleteBookmark}
+            />
+          ))}
+        </div>
+
+        {filteredBookmarks.length === 0 && (
+          <div className='py-12 text-center'>
+            <p className='text-muted-foreground'>
+              {searchQuery || selectedCategory
+                ? 'No bookmarks found matching your criteria.'
+                : 'No bookmarks yet. Add your first bookmark to get started!'}
+            </p>
+          </div>
+        )}
+
+        <EditBookmarkDialog
+          bookmark={editingBookmark}
+          categories={categories}
+          open={!!editingBookmark}
+          onOpenChange={(open) => !open && setEditingBookmark(null)}
+          onSave={handleSaveBookmark}
+        />
       </div>
-
-      <div className='flex flex-col gap-4 sm:flex-row'>
-        <div className='relative flex-1'>
-          <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
-          <Input
-            placeholder='Search bookmarks...'
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className='pl-10'
-          />
-        </div>
-      </div>
-
-      <CategoryFilter
-        categories={categories}
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-      />
-
-      <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-        {filteredBookmarks.map((bookmark) => (
-          <BookmarkCard
-            key={bookmark.id}
-            bookmark={bookmark}
-            onEdit={handleEditBookmark}
-            onDelete={handleDeleteBookmark}
-          />
-        ))}
-      </div>
-
-      {filteredBookmarks.length === 0 && (
-        <div className='py-12 text-center'>
-          <p className='text-muted-foreground'>
-            {searchQuery || selectedCategory
-              ? 'No bookmarks found matching your criteria.'
-              : 'No bookmarks yet. Add your first bookmark to get started!'}
-          </p>
-        </div>
-      )}
-
-      <EditBookmarkDialog
-        bookmark={editingBookmark}
-        categories={categories}
-        open={!!editingBookmark}
-        onOpenChange={(open) => !open && setEditingBookmark(null)}
-        onSave={handleSaveBookmark}
-      />
     </div>
   );
 }

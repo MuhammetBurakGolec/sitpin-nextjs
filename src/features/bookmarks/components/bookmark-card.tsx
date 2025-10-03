@@ -33,21 +33,21 @@ export function BookmarkCard({
 
   return (
     <Card className='group transition-shadow hover:shadow-md'>
-      <CardHeader className='pb-3'>
+      <CardHeader className='pb-2'>
         <div className='flex items-start justify-between'>
-          <div className='flex min-w-0 flex-1 items-center gap-3'>
+          <div className='flex min-w-0 flex-1 items-center gap-2'>
             <div className='flex-shrink-0'>
               {bookmark.favicon || getFaviconUrl(bookmark.url) ? (
                 <img
                   src={bookmark.favicon || getFaviconUrl(bookmark.url)!}
                   alt=''
-                  className='h-6 w-6 rounded'
+                  className='h-5 w-5 rounded'
                   onError={(e) => {
                     e.currentTarget.style.display = 'none';
                   }}
                 />
               ) : (
-                <Icons.bookmark className='text-muted-foreground h-6 w-6' />
+                <Icons.bookmark className='text-muted-foreground h-5 w-5' />
               )}
             </div>
             <div className='min-w-0 flex-1'>
@@ -63,7 +63,7 @@ export function BookmarkCard({
                 variant='ghost'
                 size='sm'
                 onClick={() => onEdit(bookmark)}
-                className='h-8 w-8 p-0'
+                className='h-7 w-7 p-0'
               >
                 <Edit className='h-3 w-3' />
               </Button>
@@ -73,7 +73,7 @@ export function BookmarkCard({
                 variant='ghost'
                 size='sm'
                 onClick={() => onDelete(bookmark.id)}
-                className='text-destructive hover:text-destructive h-8 w-8 p-0'
+                className='text-destructive hover:text-destructive h-7 w-7 p-0'
               >
                 <Trash2 className='h-3 w-3' />
               </Button>
@@ -83,15 +83,15 @@ export function BookmarkCard({
       </CardHeader>
       <CardContent className='pt-0'>
         {bookmark.description && (
-          <p className='text-muted-foreground mb-3 line-clamp-2 text-xs'>
+          <p className='text-muted-foreground mb-2 line-clamp-1 text-xs'>
             {bookmark.description}
           </p>
         )}
-        <div className='flex items-center justify-between'>
+        <div className='flex items-center justify-between gap-2'>
           {bookmark.category && (
             <Badge
               variant='secondary'
-              className='text-xs'
+              className='px-2 py-0.5 text-xs'
               style={{
                 backgroundColor: `${bookmark.category.color}20`,
                 color: bookmark.category.color,
@@ -105,7 +105,7 @@ export function BookmarkCard({
             variant='outline'
             size='sm'
             onClick={handleVisit}
-            className='ml-auto'
+            className='ml-auto h-7 px-2'
           >
             <ExternalLink className='mr-1 h-3 w-3' />
             Visit

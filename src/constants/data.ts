@@ -3,14 +3,6 @@ import { NavItem } from '@/types';
 //Info: The following data is used for the sidebar navigation and Cmd K bar.
 export const navItems: NavItem[] = [
   {
-    title: 'Dashboard',
-    url: '/dashboard/overview',
-    icon: 'dashboard',
-    isActive: false,
-    shortcut: ['d', 'd'],
-    items: [] // Empty array as there are no child items for Dashboard
-  },
-  {
     title: 'Bookmarks',
     url: '/dashboard/bookmarks',
     icon: 'bookmark',
@@ -23,6 +15,14 @@ export const navItems: NavItem[] = [
     url: '/dashboard/kanban',
     icon: 'kanban',
     shortcut: ['k', 'k'],
+    isActive: false,
+    items: [] // No child items
+  },
+  {
+    title: 'Profile',
+    url: '/dashboard/profile',
+    icon: 'user2',
+    shortcut: ['p', 'p'],
     isActive: false,
     items: [] // No child items
   }
