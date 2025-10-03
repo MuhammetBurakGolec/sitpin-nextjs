@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # Next.js Frontend Application
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://api:3001/api
+      - NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=${NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+      - NEXT_PUBLIC_CLERK_SIGN_IN_URL=/auth/sign-in
+      - NEXT_PUBLIC_CLERK_SIGN_UP_URL=/auth/sign-up
+      - NEXT_PUBLIC_CLERK_AFTER_SIGN_IN_URL=/dashboard/bookmarks
+      - NEXT_PUBLIC_CLERK_AFTER_SIGN_UP_URL=/dashboard/bookmarks
+      - NEXT_PUBLIC_SENTRY_DSN=${NEXT_PUBLIC_SENTRY_DSN}
+      - NEXT_PUBLIC_SENTRY_ORG=${NEXT_PUBLIC_SENTRY_ORG}
+      - NEXT_PUBLIC_SENTRY_PROJECT=${NEXT_PUBLIC_SENTRY_PROJECT}
+      - SENTRY_AUTH_TOKEN=${SENTRY_AUTH_TOKEN}
+      - NEXT_PUBLIC_SENTRY_DISABLED=false
+    depends_on:
+      - api
+      - mongodb
+    networks:
+      - bookmark-network
+    restart: unless-stopped
+
+  # Go Fiber API Backend
+  api:
+    image: golang:1.21-alpine
+    working_dir: /app
+    volumes:
+      - ./api:/app  # Mount your Go API code here
+    ports:
+      - "3001:3001"
+    environment:
+      - GO_ENV=production
+      - PORT=3001
+      - MONGODB_URI=mongodb://mongodb:27017/bookmarks
+      - CLERK_DOMAIN=${CLERK_DOMAIN}
+      - CLERK_JWT_AUDIENCE=${CLERK_JWT_AUDIENCE}
+      - CLERK_SECRET_KEY=${CLERK_SECRET_KEY}
+    command: >
+      sh -c "
+        go mod tidy &&
+        go run main.go
+      "
+    depends_on:
+      - mongodb
+    networks:
+      - bookmark-network
+    restart: unless-stopped
+
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    ports:
+      - "27017:27017"
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=password123
+      - MONGO_INITDB_DATABASE=bookmarks
+    volumes:
+      - mongodb_data:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
+    networks:
+      - bookmark-network
+    restart: unless-stopped
+
+  # MongoDB Admin Interface (Optional)
+  mongo-express:
+    image: mongo-express:1.0.0
+    ports:
+      - "8081:8081"
+    environment:
+      - ME_CONFIG_MONGODB_ADMINUSERNAME=admin
+      - ME_CONFIG_MONGODB_ADMINPASSWORD=password123
+      - ME_CONFIG_MONGODB_URL=mongodb://admin:password123@mongodb:27017/
+      - ME_CONFIG_BASICAUTH_USERNAME=admin
+      - ME_CONFIG_BASICAUTH_PASSWORD=admin123
+    depends_on:
+      - mongodb
+    networks:
+      - bookmark-network
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  bookmark-network:
+    driver: bridge

@@ -3,11 +3,17 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 // Define the base Next.js configuration
 const baseConfig: NextConfig = {
+  output: 'standalone',
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'api.slingacademy.com',
+        port: ''
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.google.com',
         port: ''
       }
     ]
