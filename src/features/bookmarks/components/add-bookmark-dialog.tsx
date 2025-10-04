@@ -50,7 +50,7 @@ export function AddBookmarkDialog({
       title: title.trim(),
       url: url.trim(),
       description: description.trim() || undefined,
-      categoryId: categoryId || undefined
+      categoryId: categoryId === 'none' ? undefined : categoryId || undefined
     });
 
     // Reset form
@@ -133,7 +133,7 @@ export function AddBookmarkDialog({
                 <SelectValue placeholder='Select a category' />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value=''>No category</SelectItem>
+                <SelectItem value='none'>No category</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id}>
                     {category.name}

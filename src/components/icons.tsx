@@ -26,7 +26,6 @@ import {
   IconUser,
   IconUserCircle,
   IconX,
-  IconLayoutKanban,
   IconBrandGithub
 } from '@tabler/icons-react';
 
@@ -38,7 +37,6 @@ export const Icons = {
   login: IconLogin,
   close: IconX,
   spinner: IconLoader2,
-  kanban: IconLayoutKanban,
   bookmark: IconBookmark,
   chevronLeft: IconChevronLeft,
   chevronRight: IconChevronRight,

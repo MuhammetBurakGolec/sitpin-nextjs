@@ -214,11 +214,45 @@ export default function BookmarksPage() {
     setBookmarks((prev) => [bookmark, ...prev]);
   };
 
-  const handleDeleteBookmark = (id: string) => {
+  const handleDeleteBookmark = async (id: string) => {
+    try {
+      // Try to use external API first
+      const token = await getToken();
+      const response = await apiService.deleteBookmark(id, token || undefined);
+
+      if (response.success) {
+        setBookmarks((prev) => prev.filter((b) => b.id !== id));
+        return;
+      }
+    } catch (error) {
+      console.warn('External API failed, using local storage:', error);
+    }
+
+    // Fallback to local mock data
     setBookmarks((prev) => prev.filter((b) => b.id !== id));
   };
 
-  const handleAddCategory = (newCategory: { name: string; color: string }) => {
+  const handleAddCategory = async (newCategory: {
+    name: string;
+    color: string;
+  }) => {
+    try {
+      // Try to use external API first
+      const token = await getToken();
+      const response = await apiService.createCategory(
+        newCategory,
+        token || undefined
+      );
+
+      if (response.success) {
+        setCategories((prev) => [...prev, response.data]);
+        return;
+      }
+    } catch (error) {
+      console.warn('External API failed, using local storage:', error);
+    }
+
+    // Fallback to local mock data
     const category: Category = {
       id: Date.now().toString(),
       ...newCategory,
@@ -230,7 +264,33 @@ export default function BookmarksPage() {
     setCategories((prev) => [...prev, category]);
   };
 
-  const handleDeleteCategory = (id: string) => {
+  const handleDeleteCategory = async (id: string) => {
+    try {
+      // Try to use external API first
+      const token = await getToken();
+      const response = await apiService.deleteCategory(id, token || undefined);
+
+      if (response.success) {
+        setCategories((prev) => prev.filter((c) => c.id !== id));
+        // Remove category from bookmarks
+        setBookmarks((prev) =>
+          prev.map((bookmark) =>
+            bookmark.categoryId === id
+              ? { ...bookmark, categoryId: undefined, category: undefined }
+              : bookmark
+          )
+        );
+        // Reset filter if deleted category was selected
+        if (selectedCategory === id) {
+          setSelectedCategory(null);
+        }
+        return;
+      }
+    } catch (error) {
+      console.warn('External API failed, using local storage:', error);
+    }
+
+    // Fallback to local mock data
     setCategories((prev) => prev.filter((c) => c.id !== id));
     // Remove category from bookmarks
     setBookmarks((prev) =>
@@ -250,7 +310,7 @@ export default function BookmarksPage() {
     setEditingBookmark(bookmark);
   };
 
-  const handleSaveBookmark = (
+  const handleSaveBookmark = async (
     id: string,
     updates: {
       title: string;
@@ -259,6 +319,28 @@ export default function BookmarksPage() {
       categoryId?: string;
     }
   ) => {
+    try {
+      // Try to use external API first
+      const token = await getToken();
+      const response = await apiService.updateBookmark(
+        id,
+        updates,
+        token || undefined
+      );
+
+      if (response.success) {
+        setBookmarks((prev) =>
+          prev.map((bookmark) =>
+            bookmark.id === id ? response.data : bookmark
+          )
+        );
+        return;
+      }
+    } catch (error) {
+      console.warn('External API failed, using local storage:', error);
+    }
+
+    // Fallback to local mock data
     setBookmarks((prev) =>
       prev.map((bookmark) =>
         bookmark.id === id
